@@ -1,0 +1,189 @@
+function [xdot] = distr_dyn(t,x,par)
+
+% state
+% x = [position   velocity]
+
+global flag33 flag50 flag90
+
+dt = par.dt;
+nAg = par.nAg;
+M = par.DIM;
+QBp = par.QBp;
+QBdp = par.QBdp;
+R = par.R;
+kF = par.kF;
+kA = par.kA;
+qA = par.qA;
+Xdes = par.Xdes;
+dijs = par.dijs;
+tl = par.tl;
+kr = par.kr;
+ka = par.ka;
+G = par.G;
+% alph = par.alpha; % must contain two values in (0,1)
+T0 = par.T0;
+dist_coeff = par.dist_coeff;
+max_dist = par.max_dist;
+gains = par.gains;
+
+
+% if the toplogy remains constant:
+F = par.F;
+% if the topology does not remain constant:
+% A = adjacency(G);
+% for i = 2:nAg
+%     p_i = x((i-1)*M+1:(i-1)*M+M);
+%     for j = 1:i-1
+%         if dijs(i,j) >= 0 && dijs(i,j) < dist_coeff*max_dist
+%             p_j = x((j-1)*M+1:(j-1)*M+M);
+%             if A(i,j) == 1 && norm(p_i-p_j) > dist_coeff*max_dist
+%                 A(i,j) = 0;
+%                 A(j,i) = 0;
+%             end
+%             if A(i,j) == 0 && norm(p_i-p_j) <= dist_coeff*max_dist
+%                 A(i,j) = 1;
+%                 A(j,i) = 1;
+%             end
+%         end
+%     end
+% end
+% G = graph(A);
+% degs = sum(A);
+% D = diag(degs);
+% I_nAg = eye(nAg);
+% I_M = eye(M);
+% F = kron((D+I_nAg)^-1*(A+I_nAg),I_M);
+
+
+
+% alpha = (1-t/tl)*alph(1) + (t/tl)*alph(2);
+% alpha = abs(alph(1)-(alph(1)-alph(2))*(1-exp(-t*10)));
+tt = 1+floor(t/dt);
+xdot = zeros(2*nAg*M,1);
+
+% online rigidity analysis
+% fprintf(num2str(tt))
+% fprintf(' ')
+% fprintf(num2str(t))
+% fprintf(' ')
+% rigidity_analysis(G,x(1:nAg*M)',nAg,M)
+
+if t/tl > 0.33 && ~flag33
+    fprintf('> 33%%\n')
+    flag33 = 1;
+end
+if t/tl > 0.50 && ~flag50
+    fprintf('> 50%%\n')
+    flag50 = 1;
+end
+if t/tl > 0.90 && ~flag90
+    fprintf('> 90%%\n')
+    flag90 = 1;
+end
+
+
+% preprocessing: consensus to get centroid info
+
+pBdes = Xdes(tt,1:M)';
+dpBdes = Xdes(tt,M+1:M+M)';
+pB = x(1:nAg*M);
+MSEpB = zeros(1,nAg);
+dpB = x(nAg*M+1:2*nAg*M);
+MSEdpB = zeros(1,nAg);
+k = 1;
+done = 0;
+while ~done && k <= 100
+    pB = F*pB;
+    dpB = F*dpB;
+    % computing the disagreement
+    for i = 1:nAg
+        Ni = neighbors(G,i);
+        MSEpB(i) = 0;
+        MSEdpB(i) = 0;
+        pBi = pB((i-1)*M+1:(i-1)*M+M);
+        dpBi = dpB((i-1)*M+1:(i-1)*M+M);
+        for jj = 1:length(Ni)
+            j = Ni(jj);
+            pBj = pB((j-1)*M+1:(j-1)*M+M);
+            dpBj = dpB((j-1)*M+1:(j-1)*M+M);
+            MSEpB(i) = MSEpB(i) + (pBi-pBj)'*(pBi-pBj);
+            MSEdpB(i) = MSEdpB(i) + (dpBi-dpBj)'*(dpBi-dpBj);
+        end
+    end
+    i = 1;
+    done = 1;
+    while i <= nAg && done
+        if MSEpB(i) > 10^-8 || MSEdpB(i) > 10^-8
+            done = 0;
+        end
+        i = i+1;
+    end
+    k = k+1;
+end
+
+
+
+
+% velocity integrator ---> pdot = v
+xdot(1:nAg*M) = x(nAg*M+1:2*nAg*M);
+
+% input to be assigned to the velocity ---> vdot = u
+I_M = eye(M);
+kP_tr = gains(1);
+kP_fo = gains(2);
+kD_tr = gains(3);
+kD_fo = gains(4);
+kD_vel = gains(5);
+for i = 1:nAg
+    Ni = neighbors(G,i);
+    deg_i = length(Ni);
+    formation_i = zeros(M,1);
+    alignment_i = zeros(M,1);
+    dformation_i = zeros(M,1);
+    intval_i = (i-1)*M+1:(i-1)*M+M;
+    p_i = x(intval_i);
+    dp_i = x((nAg+i-1)*M+1:(nAg+i-1)*M+M);
+    for jj = 1:deg_i
+        j = Ni(jj);
+        dij = dijs(i,j);
+        p_j = x((j-1)*M+1:(j-1)*M+M);
+        dp_j = x((nAg+j-1)*M+1:(nAg+j-1)*M+M);
+        eij = p_i-p_j;
+        deij = dp_i-dp_j;
+        sij = eij'*eij;
+        sig1_ij = sigma(sij,dij,1,kr,ka);
+        sig2_ij = sigma(sij,dij,2,kr,ka);
+        sig1_h = sig1_ij > 0;
+        if 0
+            sig1_h = 1;
+        end
+        newt_ij = 1; % pinv(2*sig2_ij*(eij*eij')+sig1_h*sig1_ij*I_M);
+%         if sig1_h 
+%             newt_ij = ka*newt_ij;
+%         else
+%             newt_ij = kr*newt_ij;
+%         end
+        %newt_ij = newt_ij/norm(newt_ij,2);
+        formation_i = formation_i + kF*newt_ij*sig1_ij*eij;
+        alignment_i = alignment_i + kA*qA(i,j)*deij;  %sig1_h*
+        dformation_i = dformation_i + kF*(2*sig2_ij*(eij*eij')+sig1_h*sig1_ij*I_M)*deij;
+    end
+    
+    % acceleration integrator ---> pddot = u
+    xdot(nAg*M+intval_i) = -(R(intval_i,intval_i)^-1)*...
+        (kP_tr*QBp*(pB(intval_i)-pBdes) +...
+         kD_tr*QBdp*(dpB(intval_i)-dpBdes) +...
+         kP_fo*formation_i +...
+         kD_fo*dformation_i +...
+         kD_vel*alignment_i);
+     
+    % checking saturation
+    for j = 1:nAg
+        xdot(
+    end
+
+end
+
+    
+end
+
