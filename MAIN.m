@@ -13,6 +13,7 @@
 % ** John Hauser is with the University of Colorado-Boulder, USA
 %
 % Published on the European Journal of Control
+% Paper available at https://doi.org/10.1016/j.ejcon.2024.100985
 % 
 % Publication history:
 % - Received 23 June 2023
