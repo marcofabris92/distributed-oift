@@ -7,7 +7,7 @@ Authors: Marco Fabris*, Giulio Fattore, Angelo Cenedese
 
 All the authors are with the University of Padua, Italy
  
-\* M. Fabris is the algorithm and software development. E-mail: marco.fabris.1@unipd.it
+\* M. Fabris is the algorithm and software developer. E-mail: marco.fabris.1@unipd.it
   
 Special thanks to John Hauser** for his assistance while using PRONTO.
 
