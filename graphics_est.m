@@ -38,7 +38,6 @@ for k = 1:K
         n2epc(k) = n2epc(k) + norm(epcki)^2;
         n2epdotc(k) = n2epdotc(k) + norm(epdotcki)^2;
     
-        %G = graph(ones(n)-eye(n));
         Ni = neighbors(G,i);
         Nicompl = setdiff((1:n),union(Ni,i));
         wipk = 0;
@@ -61,8 +60,6 @@ for k = 1:K
 end
 UBp = UBp*(cG/(n*kpy))^2;
 UBpdot = UBpdot*(cG/(n*kdy))^2;
-UBp
-UBpdot
 
 
 figure

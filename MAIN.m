@@ -909,7 +909,7 @@ grp.T0 = T0;
 % centralized graphics
 graphics_main(grp,'centralized',nAg,DIM,ftsz,lw,dijs,R,kr,ka,A)
 
-error('\nFINE PRONTO\n')
+error('\nEXECUTION TERMINATED CORRECLY\n')
 %pause
 
 

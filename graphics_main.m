@@ -584,17 +584,17 @@ if version == 'distributed'
     plots = [];
     descr = [];
     if t_settl <= T
-        settplot = plot([T0(t_settl) T0(t_settl)],[-10 30],'k'); % ylim
+        settplot = plot([T0(t_settl) T0(t_settl)],[-5 20],'k'); % ylim
         plots = [plots settplot];
         descr = [descr, {'$10\%$ settling'}];
     end
     if t_settl_2 > t_settl && t_settl_2 <= T
-        settplot2 = plot([T0(t_settl_2) T0(t_settl_2)],[-10 30],'--k');
+        settplot2 = plot([T0(t_settl_2) T0(t_settl_2)],[-5 20],'--k');
         plots = [plots settplot2];
         descr = [descr, {'$1\%$ settling'}];
     end
     if t_settl_3 > t_settl_2 && t_settl_3 <= T
-        settplot3 = plot([T0(t_settl_3) T0(t_settl_3)],[-10 30],'-.k');
+        settplot3 = plot([T0(t_settl_3) T0(t_settl_3)],[-5 20],'-.k');
         plots = [plots settplot3];
         descr = [descr, {'$0.1\%$ settling'}];
     end
@@ -607,7 +607,7 @@ if version == 'distributed'
     ylabel('$\mathbf{p}_{c}(t)$ [m]','interpreter','latex')
     set(gca,'xtick',0:1:T,'fontsize',ftsz)
     %set(get(gca,'ylabel'),'rotation',0)
-    ylim([-10 30])
+    ylim([-5 20])
 end
 
 
