@@ -46,7 +46,7 @@ control strategies.
 
 Instructions:
 
-0. install a GCC compiler on your PC (see also https://it.mathworks.com/help/matlab/call-mex-files-1.html?s_tid=CRUX_lftnav) and configure it by running mex_newt_files.m in MatLab (make sure to indicate the correct path in the command setenv)
+0. download a GCC compiler from https://jmeubank.github.io/tdm-gcc/, install it (see also https://it.mathworks.com/help/matlab/call-mex-files-1.html?s_tid=CRUX_lftnav) and configure it by running mex_newt_files.m in MatLab (make sure to indicate the correct path in the command setenv)
 1. set the kind of simulation you wish to replicate by assigning the variable simul_choice in MAIN.m (or create a new simulation)
 2. run MAIN.m and wait for its termination
 
